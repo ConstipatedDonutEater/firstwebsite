@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Picture Post Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .post {
+      background: white;
+      border: 1px solid #ccc;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .comment-box {
+      margin-top: 1rem;
+    }
+    .post-img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin-bottom: 1rem;
+    }
+    .comments-list {
+      margin: 0.5rem 0 0 0;
+      padding-left: 1.2rem;
+    }
+    .comments-list li {
+      margin-bottom: 0.3rem;
+    }
+    .add-form {
+      background: #fffbe7;
+      border: 1px solid #ffe08a;
+      padding: 1rem;
+      margin-bottom: 2rem;
+    }
+    .add-form input[type="text"] {
+      width: 60%;
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Picture Post Demo</h1>
+  <div style="text-align:center; margin-bottom:1.5rem;">
+    <a href="https://daraplusmayomikun.ng" target="_blank" style="display:inline-block; background:#0078d4; color:#fff; padding:0.7em 1.5em; border-radius:6px; text-decoration:none; font-weight:bold; font-size:1.1em;">Visit daraplusmayomikun.ng</a>
+  </div>
+  <form class="add-form" id="add-post-form">
+    <label>Image: <input type="file" id="image-input" accept="image/*" required></label><br><br>
+    <label>Caption: <input type="text" id="caption-input" maxlength="100" required></label>
+    <button type="submit">Post</button>
+  </form>
+  <div id="posts-container"></div>
+  <script>
+    // Helper to get posts from localStorage
+    function getPosts() {
+      return JSON.parse(localStorage.getItem('posts') || '[]');
+    }
+    // Helper to save posts
+    function savePosts(posts) {
+      localStorage.setItem('posts', JSON.stringify(posts));
+    }
+    // Render all posts
+    function renderPosts() {
+      const posts = getPosts();
+      const container = document.getElementById('posts-container');
+      container.innerHTML = '';
+      posts.forEach((post, idx) => {
+        const postEl = document.createElement('div');
+        postEl.className = 'post';
+        postEl.innerHTML = `
+          <img src="${post.img}" class="post-img" alt="Posted image">
+          <p><strong>${post.caption}</strong></p>
+          <h4>Comments:</h4>
+          <ul class="comments-list">
+            ${(post.comments||[]).map(c => `<li>${c}</li>`).join('')}
+          </ul>
+          <div class="comment-box">
+            <input type="text" placeholder="Add a comment" />
+            <button>Add</button>
+          </div>
+        `;
+        // Add comment logic
+        const input = postEl.querySelector('input');
+        const button = postEl.querySelector('button');
+        button.addEventListener('click', () => {
+          const comment = input.value.trim();
+          if (!comment) return;
+          posts[idx].comments = posts[idx].comments || [];
+          posts[idx].comments.push(comment);
+          savePosts(posts);
+          renderPosts();
+        });
+        container.appendChild(postEl);
+      });
+    }
+    // Handle new post
+    document.getElementById('add-post-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById('image-input');
+      const captionInput = document.getElementById('caption-input');
+      const file = fileInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const posts = getPosts();
+        posts.unshift({ img: evt.target.result, caption: captionInput.value, comments: [] });
+        savePosts(posts);
+        renderPosts();
+        fileInput.value = '';
+        captionInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    });
+    // Initial render
+    renderPosts();
+  </script>
+</body>
+</html>
